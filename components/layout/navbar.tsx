@@ -64,15 +64,14 @@ export function Navbar() {
                   <Briefcase className="h-6 w-6 text-white" />
                 </div>
               </div>
-              <span className="font-bold text-2xl text-white group-hover:text-gray-200 transition-colors duration-300">
+              <span className="font-bold text-2xl text-white group-hover:text-gray-200 transition-colors duration-300 leading none">
                 Fail U Forward
               </span>
             </Link>
           </motion.div>
         </div>
-
         {/* Right side controls (Desktop) */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden md:flex items-center gap-3 justify-center w-full bg-transparent">
           {loggedIn ? (
             <div className="flex items-center space-x-2">
               <DropdownMenu>
