@@ -1,29 +1,20 @@
-<p align="center">
-  <img src="public/assets/gssoc-banner.png" alt="GSSoC Banner" />
-</p>
+**fail-u-forward**
 
-# fail-u-forward
+a community driven platform where failure is not something to hide but something to celebrate. It’s designed to share honest stories of setbacks and rejections and lessons learned: all the stuff LinkedIn filters out
 
-<h4> It's a community driven platform where failure is not something to hide but something to celebrate. It’s designed to share honest stories of setbacks and rejections and lessons learned: all the stuff LinkedIn filters out. </h4>
+**table of contents**
 
----
+- [Project Insights](#-project-insights)
+- [Features](#-features)
+- [Technology Stack](#️-technology-stack)
+- [Project Structure](#-project-structure)
+- [Setup Instructions](#️-setup-instructions)
+- [Local Development](#local-development)
+- [What's Next](#️-whats-next)
+- [Contact](#-contact)
+- [License](#-license)
 
-
-## 📚 Table of Contents
-
-- [📝 Project Insights](#-project-insights)
-- [📂 Features](#-features)
-- [🛠️ Technology Stack](#️-technology-stack)
-- [📁 Project Structure](#-project-structure)
-- [⚙️ Setup Instructions](#️-setup-instructions)
-- [💻 Local Development](#local-development)
-- [🛣️ What's Next](#️-whats-next)
-- [📩 Contact](#-contact)
-- [📄 License](#-license)
-
----
-
-## 📝 Project Insights 
+**project insights**
 
 <table align="center">
     <thead align="center">
@@ -48,10 +39,7 @@
     </tbody>
 </table>
 
----
-
-
-## 📂 Features 
+**features**
 
 - 📢 Post your rejections, failures and real lessons learned
 - 🔍 Browse stories by category:
@@ -61,10 +49,7 @@
   - and more coming soon
 - 🖥️ Smart AI validation for respectful, safe and constructive content
 
----
-
-
-## 🛠️ Technology Stack
+**technology stack**
 
 <p float="left">
   <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" height="28"/>
@@ -78,10 +63,7 @@
 - **Database & Auth:** Firebase  
 - **AI Validation:** Gemini 
 
----
-
-
-## 📁 Project Structure
+**project structure**
 
 ```
 fail-u-forward/
@@ -175,7 +157,7 @@ fail-u-forward/
 └── 📄 vanta.d.ts                    # Vanta.js type definitions
 ```
 
-**Directory Descriptions:**
+**directory descriptions:**
 
 - **`app/`** - Next.js 13+ App Router directory containing all pages and API routes
 - **`components/`** - Reusable React components organized by feature
@@ -189,9 +171,9 @@ fail-u-forward/
 ---
 
 
-## ⚙️ Setup Instructions 
+## ⚙️ setup instructions 
 
-**📦 Scripts**
+**📦 scripts**
 
 | Command         | Description                    |
 |-----------------|--------------------------------|
