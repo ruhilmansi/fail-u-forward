@@ -125,12 +125,12 @@ export default function PublicProfile({ params }: { params: { userId: string } }
                 <Avatar className="w-36 h-36 mr-6 ring-3 ring-gray-600">
                     <AvatarImage 
                       src={avatarSrc} 
-                      alt={`${userData.username}'s avatar`} 
+                      alt={`${userData?.username || "User"}'s avatar`} 
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
                     <AvatarFallback className="w-full h-full flex items-center justify-center bg-gray-100 text-2xl font-semibold text-gray-500">
-                      {userData.username[0]}
+                      {userData?.username?.[0] || "?"}
                     </AvatarFallback>
                   </Avatar>
                   

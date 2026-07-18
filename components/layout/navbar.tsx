@@ -55,20 +55,12 @@ export function Navbar() {
       
       <div className="relative container mx-auto px-4 flex h-16 justify-between items-center">
         {/* Logo */}
-        <div className="flex items-center">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 400, damping: 17 }}>
-            <Link href="/" className="flex items-center space-x-3 group">
-              <div className="relative">
-                <div className="absolute inset-0 bg-white/10 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative bg-white/10 p-2 rounded-lg border border-white/20">
-                  <Briefcase className="h-6 w-6 text-white" />
-                </div>
-              </div>
-              <span className="font-bold text-2xl text-white group-hover:text-gray-200 transition-colors duration-300 leading none">
-                Fail U Forward
-              </span>
-            </Link>
-          </motion.div>
+        <div className="flex items-center ml-1">
+          <Link href="/" className="flex items-center">
+            <span className="font-medium text-base text-white/90">
+              failuforward
+            </span>
+          </Link>
         </div>
         {/* Right side controls (Desktop) */}
         <div className="hidden md:flex items-center gap-3 justify-center w-full bg-transparent">

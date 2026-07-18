@@ -85,7 +85,7 @@ export function LeftSidebar() {
             />
             <AvatarFallback>{displayData.username.charAt(0)}</AvatarFallback>
           </Avatar>
-          <h3 className="font-semibold text-lg text-primary">
+          <h3 className="font-semibold text-lg text-primary lowercase">
             {displayData.username}
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -112,7 +112,7 @@ export function LeftSidebar() {
               className: "flex items-center w-full p-3 my-2 bg-background text-foreground border-border",
             })}
           >
-            Edit Profile
+            edit profile
           </Link>
 
         </div>
@@ -126,7 +126,7 @@ export function LeftSidebar() {
             })}
           >
             <Users className="h-5 w-5 mr-3" />
-            <span>Network</span>
+            <span>network</span>
           </Link>
           <Link
             href="/jobs"
@@ -136,7 +136,7 @@ export function LeftSidebar() {
             })}
           >
             <Briefcase className="h-5 w-5 mr-3" />
-            <span>Failed Jobs</span>
+            <span>failed jobs</span>
           </Link>
           <Link
             href="/learning"
@@ -146,7 +146,7 @@ export function LeftSidebar() {
             })}
           >
             <BookOpen className="h-5 w-5 mr-3" />
-            <span>Learning</span>
+            <span>learning</span>
           </Link>
         </nav>
       </div>

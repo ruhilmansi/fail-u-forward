@@ -1,6 +1,6 @@
-import { getFirestore } from "firebase-admin/firestore";
+import admin from "@/lib/firebaseAdmin";
 
-const db = getFirestore();
+const db = admin.firestore();
 
 export async function fetchPosts() {
     const postsSnapshot = await db
@@ -289,4 +289,18 @@ export async function incrementShare(postId: string) {
     await postRef.update({ shares: newShares });
 
     return { id: postId, shares: newShares };
+}
+
+export async function deletePost(postId: string, userId: string) {
+    const postRef = db.collection("posts").doc(postId);
+    const postDoc = await postRef.get();
+
+    if (!postDoc.exists) return { error: "Post not found", status: 404 };
+
+    const post = postDoc.data();
+    if (post?.userId !== userId)
+        return { error: "Not authorized to delete this post", status: 403 };
+
+    await postRef.delete();
+    return { success: true };
 }

@@ -5,27 +5,15 @@ import {
     arrayRemove,
     getDoc,
 } from "firebase/firestore";
-import { getAuth } from "firebase-admin/auth";
-import { initializeApp, getApps, cert } from "firebase-admin/app";
+import admin from "@/lib/firebaseAdmin";
 import { db } from "@/lib/firebase";
-
-// Ensure Firebase Admin is initialized once
-if (!getApps().length) {
-    initializeApp({
-        credential: cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-        }),
-    });
-}
 
 export async function handleFollowAction(
     token: string,
     targetUserId: string,
     action: string
 ) {
-    const auth = getAuth();
+    const auth = admin.auth();
 
     // 🔐 Verify Firebase ID token
     const decodedToken = await auth.verifyIdToken(token).catch(() => {

@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { editPostContent } from "@/services/posts";
-
-import { getAuth } from "firebase-admin/auth";
-const auth = getAuth();
-
-// Standardized response helper
-function response(data: any = null, error: string | null = null, status = 200) {
-    return NextResponse.json({ success: !error, data, error }, { status });
-}
+import admin from "@/lib/firebaseAdmin";
+const auth = admin.auth();
 
 export async function POST(
     req: NextRequest,
@@ -16,7 +10,7 @@ export async function POST(
     try {
         const authHeader = req.headers.get("Authorization");
         if (!authHeader?.startsWith("Bearer "))
-            return response(null, "Unauthorized", 401);
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         const idToken = authHeader.split("Bearer ")[1];
         const decodedToken = await auth.verifyIdToken(idToken);
@@ -25,11 +19,11 @@ export async function POST(
         const { content } = await req.json();
         const result = await editPostContent(params.id, uid, content);
 
-        if (result.error) return response(null, result.error, result.status);
-        return response(result);
+        if (result.error) return NextResponse.json({ error: result.error }, { status: result.status || 400 });
+        return NextResponse.json(result);
     } catch (err) {
         console.error("Error editing post:", err);
-        return response(null, "Unauthorized", 401);
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 }
 

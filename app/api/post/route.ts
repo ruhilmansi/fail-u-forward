@@ -1,40 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
+import admin from "@/lib/firebaseAdmin";
 import { fetchPosts, createPost } from "@/services/posts";
 import { getUserById } from "@/services/users";
 
-// Initialize Firebase Admin
-if (!getApps().length) {
-    initializeApp({
-        credential: cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-        }),
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-    });
-}
+const auth = admin.auth();
 
-const auth = getAuth();
-
-// Standardized response helper
 function response(data: any = null, error: string | null = null, status = 200) {
     return NextResponse.json({ success: !error, data, error }, { status });
 }
 
-// GET /api/posts
 export async function GET() {
     try {
         const posts = await fetchPosts();
-        return response(posts);
+        return NextResponse.json({ posts });
     } catch (err) {
         console.error("Error fetching posts:", err);
-        return response(null, "Failed to fetch posts", 500);
+        return NextResponse.json({ error: "Failed to fetch posts" }, { status: 500 });
     }
 }
 
-// POST /api/posts
 export async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get("Authorization");
@@ -48,20 +32,18 @@ export async function POST(req: NextRequest) {
 
         const { content, imageUrl } = await req.json();
 
-        // Validate content
-        const baseUrl = process.env.API_KEY;
-        const validateResponse = await fetch(`${baseUrl}/api/validate`, {
+        const validateResponse = await fetch(`${req.nextUrl.origin}/api/validate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ text: content }),
         });
-        const { result: validationResult } = await validateResponse.json();
+        const validateJson = await validateResponse.json();
+        const validationResult = validateJson?.data?.result;
 
         if (validationResult !== "1") {
             return response(null, "Content not appropriate for posting", 400);
         }
 
-        // Get user info
         const userData = await getUserById(uid);
         const userName =
             userData?.username || userData?.displayName || "Anonymous";
@@ -70,6 +52,7 @@ export async function POST(req: NextRequest) {
         return response({ message: "Post created successfully" });
     } catch (err) {
         console.error("Error creating post:", err);
-        return response(null, "Unauthorized", 401);
+        const message = err instanceof Error ? err.message : "Unknown error";
+        return response(null, message, 500);
     }
 }

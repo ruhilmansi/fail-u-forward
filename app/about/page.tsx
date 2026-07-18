@@ -89,24 +89,16 @@ const StoryPage = () => {
           </p>
           <div className="flex justify-center gap-4 sm:gap-6 text-xl sm:text-2xl mb-2">
             <a
-              href="https://github.com/mansiruhil/fail-u-forward"
+              href="https://github.com/ruhilmansi/fail-u-forward"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 sm:p-3 rounded-full bg-white hover:bg-gray-300 shadow transition duration-300 transform hover:-translate-y-1"
             >
               <Github size={24} className="text-black" />
             </a>
-            <a
-              href="https://discord.gg/ZEspWbV6"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 sm:p-3 rounded-full bg-white hover:bg-gray-300 shadow transition duration-300 transform hover:-translate-y-1"
-            >
-              <FaDiscord size={24} className="text-black" />
-            </a>
             {/* Add LinkedIn icon here */}
             <a
-              href="https://www.linkedin.com/in/yourusername/"  // Replace with the actual LinkedIn URL
+              href="https://www.linkedin.com/in/mansi-ruhil-7a00a0228/"  // Replace with the actual LinkedIn URL
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 sm:p-3 rounded-full bg-white hover:bg-gray-300 shadow transition duration-300 transform hover:-translate-y-1"

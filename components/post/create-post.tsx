@@ -2,21 +2,17 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   collection,
   getDocs,
-  query,
-  orderBy,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { HashLoader } from "react-spinners";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
-import { updateDoc, doc, increment } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Link2, ThumbsDown, MessageCircle, Heart, ImageUp } from "lucide-react";
+import { Link2, ThumbsDown, MessageCircle, ImageUp, Trash2 } from "lucide-react";
 import { LikeReactionPopover } from "./LikeReactionPopover";
 import { onAuthStateChanged } from "firebase/auth";
 type User = {
@@ -25,6 +21,20 @@ type User = {
   email: string;
   profilepic?: string;
 };
+
+function timeAgo(date: any) {
+  const now = Date.now();
+  const then = typeof date === "object" && date?.toDate ? date.toDate().getTime() : new Date(date).getTime();
+  const seconds = Math.floor((now - then) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(then).toLocaleDateString();
+}
 
 export function CreatePost() {
   const [postContent, setPostContent] = useState<string>("");
@@ -640,6 +650,31 @@ export function CreatePost() {
     setEditContent("");
   };
 
+  const handleDeletePost = async (postId: string) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    if (!window.confirm("Delete this post?")) return;
+
+    try {
+      const idToken = await currentUser.getIdToken();
+      const response = await fetch(`/api/post/${postId}/delete`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${idToken}` }
+      });
+
+      if (response.ok) {
+        setPosts(posts.filter(p => p.id !== postId));
+        toast.success("Post deleted");
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to delete post");
+      }
+    } catch (error) {
+      toast.error("Failed to delete post");
+    }
+  };
+
   const canEditPost = (post: any) => {
     const currentUser = auth.currentUser;
     return currentUser &&
@@ -666,216 +701,116 @@ export function CreatePost() {
       {authInitialized && auth.currentUser && (
         <>
 
-<Card
-  className={[
-    "relative mx-auto w-full max-w-[560px] overflow-hidden rounded-2xl",
-    "border border-border bg-background",
-  ].join(" ")}
->
-  <div
-    aria-hidden="true"
-    className="pointer-events-none absolute inset-0 opacity-30"
-  >
-    <div className="absolute inset-0 [background:repeating-linear-gradient(135deg,rgba(255,255,255,0.22)_0px,rgba(255,255,255,0.22)_2px,transparent_2px,transparent_18px)] [filter:drop-shadow(0_0_6px_rgba(255,255,255,0.18))]" />
-    <div className="absolute inset-0 [background:repeating-linear-gradient(45deg,rgba(255,255,255,0.18)_0px,rgba(255,255,255,0.18)_1.5px,transparent_1.5px,transparent_22px)] [filter:drop-shadow(0_0_8px_rgba(255,255,255,0.22))]" />
-
-    <svg className="absolute -top-12 -left-12 h-56 w-56" viewBox="0 0 200 200" fill="none">
-      <path d="M10 60 L140 10 M0 150 L200 90" stroke="currentColor" className="opacity-30" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M60 200 L180 60" stroke="currentColor" className="opacity-25" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-    <svg className="absolute -bottom-14 -right-16 h-64 w-64" viewBox="0 0 200 200" fill="none">
-      <path d="M20 20 L180 20 L180 180" stroke="currentColor" className="opacity-25" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M0 120 L160 0" stroke="currentColor" className="opacity-25" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  </div>
-
-  <div className="relative z-10 px-5 pt-4 pb-2">
-    <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1">
-      <span className="h-2 w-2 rounded-full bg-foreground" />
-      <span className="text-xs font-semibold tracking-wider text-foreground">Create Post</span>
-    </div>
-  </div>
-
-  <div className="relative z-10 flex gap-4 p-5 pt-2">
-    <Avatar className="w-10 h-10 ring-1 ring-border">
+<div className="bg-card border border-border rounded-xl mx-auto w-full max-w-[560px]">
+  <div className="flex items-center gap-3 px-5 pt-4 pb-3 border-b border-border">
+    <Avatar className="w-10 h-10 shrink-0 ring-2 ring-border">
       <Image
         loading="lazy"
         src={currentUserProfilePic || ""}
         width={100}
         height={100}
-        alt={"User's avatar"}
-        className="rounded-full"
+        alt="Your avatar"
+        className="rounded-full object-cover"
       />
     </Avatar>
-
-    <div className="flex-1">
-      <h2 className="text-lg font-semibold mb-2">Share your story</h2>
-
-      <div className="rounded-xl border-1 border-border bg-muted/80 transition-colors focus-within:border-primary focus-within:bg-muted">
-        <label htmlFor="post-content" className="sr-only">
-          Share your failure story or experience
-        </label>
-        <Textarea
-          id="post-content"
-          placeholder="Share your latest failure..."
-          className="min-h-[110px] w-full bg-transparent text-foreground border-0 px-4 py-3 text-sm placeholder:text-muted-foreground focus-visible:ring-0"
-          value={postContent}
-          onChange={(e: any) => setPostContent(e.target.value)}
-          aria-describedby="post-content-description"
-          maxLength={2000}
-        />
-        <div id="post-content-description" className="sr-only">
-          Share your failure story, what you learned, or ask for advice. Maximum 2000 characters.
-        </div>
-      </div>
-
-      {imagePreview && (
-        <div className="mt-4 relative">
-          <Image
-            src={imagePreview}
-            alt="Preview"
-            width={300}
-            height={200}
-            className="rounded-lg object-cover border-2 border-border"
-          />
-          <Button
-            type="button"
-            size="sm"
-            className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full bg-background text-foreground border-2 border-border hover:translate-y-0.5 transition focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
-            onClick={removeImage}
-            aria-label="Remove selected image from post"
-          >
-            <span aria-hidden="true">✕</span>
-          </Button>
-        </div>
-      )}
-
-      <div className="justify-between items-center mt-4 md:flex">
-        <div className="flex gap-2 items-center">
-          <label htmlFor="image-upload" className="cursor-pointer">
-            <Button
-              type="button"
-              size="sm"
-              className={[
-                "my-2 px-6 py-2 rounded-xl font-semibold transition-transform",
-                "bg-background text-foreground border-1 border-border",
-                "hover:translate-y-0.5 active:translate-y-1",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
-               
-              ].join(" ")}
-              aria-describedby="image-upload-description"
-            >
-              <span className="flex items-center gap-2">
-                <ImageUp className="h-4 w-4" aria-hidden="true" />
-                <span>Upload image</span>
-              </span>
-            </Button>
-          </label>
-          <input
-            id="image-upload"
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleImageSelect}
-            aria-describedby="image-upload-description"
-          />
-          <div id="image-upload-description" className="sr-only">
-            Upload an image to accompany your post. Supported formats: JPG, PNG, GIF. Maximum size: 10MB.
-          </div>
-          {uploadingImage && (
-            <span className="text-sm text-muted-foreground ml-2">Uploading...</span>
-          )}
-        </div>
-
-        <Button
-          size="sm"
-          onClick={async () => {
-            setPostBtnActive(true);
-            setTimeout(() => setPostBtnActive(false), 300);
-            await handlePostSubmit();
-          }}
-          disabled={loading || uploadingImage || !postContent.trim()}
-          className={[
-            "my-2 px-6 py-2 rounded-xl font-semibold transition-transform",
-            "bg-primary text-primary-foreground border-1 border-primary",
-            postBtnActive ? "translate-y-0.5" : "hover:translate-y-0.5 active:translate-y-1",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
-            "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
-          ].join(" ")}
-          aria-describedby="post-button-description"
-          type="submit"
-        >
-          {loading || uploadingImage ? (
-            <>
-              <span className="sr-only">Publishing your post...</span>
-              <span aria-hidden="true">Posting...</span>
-            </>
-          ) : (
-            <>
-              <span className="sr-only">Publish your failure story</span>
-              <span aria-hidden="true">POST</span>
-            </>
-          )}
-        </Button>
-        <div id="post-button-description" className="sr-only">
-          Click to publish your post. Button is disabled when content is empty or while uploading.
-        </div>
-      </div>
-
-      {errorMessage && <p className="text-destructive text-sm mt-3">{errorMessage}</p>}
+    <div className="flex-1 min-w-0">
+      <p className="font-semibold text-sm text-foreground truncate lowercase">{(auth.currentUser?.displayName || "share your story")}</p>
+      <p className="text-xs text-muted-foreground">create a post</p>
     </div>
   </div>
-</Card>
 
-  {/* ========== END updated block ========== */}
+  <div className="px-5 py-4">
+    <textarea
+      id="post-content"
+      placeholder="project idea..."
+      className="w-full bg-transparent text-foreground border-0 text-sm placeholder:text-muted-foreground resize-none focus:outline-none min-h-[100px]"
+      value={postContent}
+      onChange={(e: any) => setPostContent(e.target.value)}
+      maxLength={2000}
+    />
+
+    {imagePreview && (
+      <div className="mt-3 relative rounded-xl overflow-hidden border border-border">
+        <Image
+          src={imagePreview}
+          alt="Preview"
+          width={500}
+          height={300}
+          className="object-cover w-full max-h-80"
+        />
+        <button
+          onClick={removeImage}
+          className="absolute top-2 right-2 h-7 w-7 flex items-center justify-center rounded-full bg-background/80 text-foreground text-sm hover:bg-background transition"
+        >
+          ✕
+        </button>
+      </div>
+    )}
+
+    <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
+      <label htmlFor="image-upload" className="cursor-pointer">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition px-3 py-1.5 rounded-lg hover:bg-muted">
+          <ImageUp className="h-4 w-4" />
+          <span>image</span>
+        </div>
+      </label>
+      <input
+        id="image-upload"
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageSelect}
+      />
+      {uploadingImage && (
+        <span className="text-xs text-muted-foreground">Uploading...</span>
+      )}
+
+      <button
+        onClick={async () => {
+          setPostBtnActive(true);
+          setTimeout(() => setPostBtnActive(false), 300);
+          await handlePostSubmit();
+        }}
+        disabled={loading || uploadingImage || !postContent.trim()}
+        className="px-5 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 transition"
+      >
+        {loading || uploadingImage ? "posting..." : "post"}
+      </button>
+    </div>
+
+    {errorMessage && (
+      <p className="text-destructive text-xs mt-2">{errorMessage}</p>
+    )}
+  </div>
+</div>
         </>
       )}
 
-      {/* Show login prompt if not authenticated */}
       {authInitialized && !auth.currentUser && (
-        <Card className="p-4 text-center">
-          <p className="text-muted-foreground">
-            <Button variant="link" onClick={() => router.push("/login")}>
+        <div className="bg-card border border-border rounded-xl p-6 text-center">
+          <p className="text-muted-foreground text-sm">
+            <button onClick={() => router.push("/login")} className="text-primary font-medium hover:underline">
               Login
-            </Button>
-            to create posts, like, and comment.
-          </p>
-        </Card>
-      )}
-
-      {/* Debug and refresh section - only show for authenticated users */}
-      {authInitialized && auth.currentUser && (
-        <div className="mt-4 flex justify-between items-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchPosts}
-            disabled={loading}
-          >
-            Refresh Posts
-          </Button>
-          <p className="text-sm text-muted-foreground">
-            {posts.length} posts found
+            </button>
+            {" "}to create posts, like, and comment
           </p>
         </div>
       )}
 
-      {/* Error message display - only show for authenticated users */}
-      {authInitialized && auth.currentUser && errorMessage && posts.length > 0 && (
-        <Card className="p-4 mt-4 border-yellow-200 bg-yellow-50">
-          <div className="flex items-center gap-2">
-            <span className="text-yellow-600">⚠️</span>
-            <p className="text-yellow-700 text-sm font-medium">{errorMessage}</p>
-          </div>
-          {errorMessage.includes('insufficient permissions') && (
-            <div className="text-sm text-yellow-700 mt-2">
-              <p className="font-medium">To fix this:</p>
-              <ol className="list-decimal list-inside space-y-1 mt-2">
-                <li>You don't have permission to access firebase databse</li>
-              </ol>
-            </div>
-          )}
-        </Card>
+      {authInitialized && auth.currentUser && errorMessage && !posts.length && (
+        <div className="bg-card border border-border rounded-xl p-8 text-center mt-6">
+          <div className="text-muted-foreground text-lg font-medium mb-2">⚠️ Failed to Load Posts</div>
+          <p className="text-muted-foreground text-sm max-w-md mx-auto mb-4">
+            {errorMessage}
+          </p>
+          <button
+            onClick={fetchPosts}
+            disabled={loading}
+            className="px-5 h-9 rounded-lg border border-border text-sm font-medium hover:bg-muted transition disabled:opacity-40"
+          >
+            Try Again
+          </button>
+        </div>
       )}
 
       {/* Show posts only if user is authenticated */}
@@ -888,9 +823,9 @@ export function CreatePost() {
                 user?.profilepic ||
                 "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png";
               return (
-                <Card
+                <div
                   key={post.id}
-                  className="p-4 mb-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  className="bg-card border border-border rounded-xl mb-4 overflow-hidden transition-shadow hover:shadow-md cursor-pointer"
                   onClick={() => handlePostClick(post.id)}
                   onKeyDown={(e) => handleKeyDown(e, () => handlePostClick(post.id))}
                   tabIndex={0}
@@ -898,127 +833,135 @@ export function CreatePost() {
                   aria-label={`View post by ${post.userName}`}
                 >
                   {/* Profile Header */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <Avatar className="w-10 h-10 ring-1 ring-border">
+                  <div className="flex items-center gap-3 px-5 pt-5 pb-2">
+                    <Avatar className="w-12 h-12 ring-2 ring-border">
                       <Image
                         src={profilePic}
                         height={100}
                         width={100}
                         alt={`${user?.username || "Anonymous"}'s avatar`}
-                        className="rounded-full"
+                        className="rounded-full object-cover"
                       />
                     </Avatar>
-                    <div className="flex-1">
-                      <p className="font-bold text-sm">{post.userName}</p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(post.timestamp).toLocaleString()}
+                    <div className="flex-1 min-w-0">
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          router.push(`/profile/${post.userId}`);
+                        }}
+                        className="font-semibold text-sm text-foreground truncate hover:underline text-left"
+                      >
+                        {post.userName}
+                      </button>
+                      <p className="text-xs text-muted-foreground">
+                        {timeAgo(post.timestamp)}
                       </p>
                     </div>
                     {canEditPost(post) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleEditPost(post.id, post.content);
-                        }}
-                      >
-                        Edit
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleEditPost(post.id, post.content);
+                          }}
+                          className="text-muted-foreground hover:text-foreground text-xs"
+                        >
+                          Edit
+                        </Button>
+                        <button
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleDeletePost(post.id);
+                          }}
+                          className="text-muted-foreground hover:text-destructive transition p-1.5 rounded hover:bg-destructive/10"
+                          aria-label="Delete post"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     )}
                   </div>
 
                   {/* Post Content */}
-                  <div className="max-w-xl px-10">
-                    <div className="mb-3">
-                      {editingPostId === post.id ? (
-                        <div className="space-y-2">
-                          <Textarea
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            className="min-h-[100px]"
-                            onClick={(event) => event.stopPropagation()}
-                          />
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleSaveEdit(post.id);
-                              }}
-                            >
-                              Save
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleCancelEdit();
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
+                  <div className="px-5 py-3">
+                    {editingPostId === post.id ? (
+                      <div className="space-y-2">
+                        <Textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          className="min-h-[100px]"
+                          onClick={(event) => event.stopPropagation()}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleSaveEdit(post.id);
+                            }}
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleCancelEdit();
+                            }}
+                          >
+                            Cancel
+                          </Button>
                         </div>
-                      ) : (
-                        <p className="text-foreground leading-relaxed px-5">{post.content}</p>
-                      )}
-                    </div>
-
+                      </div>
+                    ) : (
+                      <p className="text-foreground leading-relaxed text-[15px]">{post.content}</p>
+                    )}
 
                     {/* Display image if exists */}
                     {post.imageUrl && (
-                      <div className="mb-4 lg:mb-6">
+                      <div className="mt-3 -mx-5">
                         <Image
                           src={post.imageUrl}
                           alt="Post image"
                           width={500}
                           height={300}
-                          className="rounded-lg object-cover w-full max-h-96 lg:max-h-[500px]"
+                          className="object-cover w-full max-h-96 lg:max-h-[500px]"
                         />
                       </div>
                     )}
-                    <div className="flex justify-around text-sm lg:text-base text-gray-500">
+                    <div className="flex items-center justify-around text-sm text-muted-foreground mt-3 pt-1">
                       <motion.div whileTap={{ scale: 0.9 }}>
                         <LikeReactionPopover
                           reactions={post.reactions || {}}
                           currentUserId={auth.currentUser?.uid || null}
                           onReact={(reactionType) => handleReaction(post.id, reactionType)}
                         />
-
                       </motion.div>
 
-                      <motion.div whileTap={{ scale: 0.9 }}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            if (!auth.currentUser) {
-                              toast.error("Please login to dislike posts");
-                              return;
-                            }
-                            handleDislike(post.id);
-                          }}
-                          className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                          aria-label={`${dislikedPosts.includes(post.id) ? 'Remove dislike from' : 'Dislike'} post by ${post.userName}`}
-                          aria-pressed={dislikedPosts.includes(post.id)}
-                        >
-                          <ThumbsDown
-                            className={`h-4 w-4 ${dislikedPosts.includes(post.id)
-                                ? "text-blue-500"
-                                : likedPosts.includes(post.id)
-                                  ? "text-red-500"
-                                  : "text-gray-500"
-                              }`}
-                            aria-hidden="true"
-                          />
-                          <span>{post.dislikes || 0} Dislike{(post.dislikes || 0) !== 1 ? 's' : ''}</span>
-                        </Button>
-                      </motion.div>
-
-
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!auth.currentUser) {
+                            toast.error("Please login to dislike posts");
+                            return;
+                          }
+                          handleDislike(post.id);
+                        }}
+                        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+                        aria-label={`${dislikedPosts.includes(post.id) ? 'Remove dislike from' : 'Dislike'} post by ${post.userName}`}
+                        aria-pressed={dislikedPosts.includes(post.id)}
+                      >
+                        <ThumbsDown
+                          className={`h-4 w-4 ${dislikedPosts.includes(post.id) ? "text-blue-500" : likedPosts.includes(post.id) ? "text-red-500" : ""}`}
+                          aria-hidden="true"
+                        />
+                        <span>{post.dislikes || 0}</span>
+                      </Button>
 
                       <Button
                         variant="ghost"
@@ -1031,12 +974,12 @@ export function CreatePost() {
                           }
                           toggleCommentBox(post.id)
                         }}
-                        className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
                         aria-label={`${commentBoxStates[post.id] ? 'Hide' : 'Show'} comments for post by ${post.userName}`}
                         aria-expanded={commentBoxStates[post.id] || false}
                       >
                         <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                        <span>{post.comments?.length || 0} Comment{(post.comments?.length || 0) !== 1 ? 's' : ''}</span>
+                        <span>{post.comments?.length || 0}</span>
                       </Button>
 
                       <Button
@@ -1046,34 +989,30 @@ export function CreatePost() {
                           event.stopPropagation();
                           handleShare(post.id)
                         }}
-                        className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
                         aria-label={`Share post by ${post.userName}`}
                       >
                         <Link2 className="h-4 w-4" aria-hidden="true" />
-                        <span>{post.shares || 0} Share{(post.shares || 0) !== 1 ? 's' : ''}</span>
+                        <span>{post.shares || 0}</span>
                       </Button>
                     </div>
                   </div>
                   {commentBoxStates[post.id] && auth.currentUser && (
-                    <>
-                      <div className="mt-4 lg:mt-6">
-                        <div className="flex items-center gap-2 lg:gap-4">
-                          <Avatar className="w-8 h-8 lg:w-12 lg:h-12">
-                            <Image
-                              src={currentUserProfilePic || ""}
-                              height={100}
-                              width={100}
-                              alt="User Avatar"
-                              className="rounded-full"
-                            />
-                          </Avatar>
-                          <label htmlFor={`comment-${post.id}`} className="sr-only">
-                            Write a comment on this post
-                          </label>
+                    <div className="px-5 pb-4">
+                      <div className="flex items-start gap-3 pt-3 border-t border-border">
+                        <Avatar className="w-9 h-9 shrink-0">
+                          <Image
+                            src={currentUserProfilePic || ""}
+                            height={100}
+                            width={100}
+                            alt="User Avatar"
+                            className="rounded-full"
+                          />
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
                           <Textarea
-                            id={`comment-${post.id}`}
                             placeholder="Write a comment..."
-                            className="flex-1 min-h-[40px] lg:min-h-[60px] resize-none text-sm lg:text-base"
+                            className="min-h-[40px] resize-none text-sm rounded-xl bg-muted/50 border-border focus:bg-muted"
                             value={commentInputs[post.id] || ""}
                             onChange={(e: any) =>
                               setCommentInputs((prev: any) => ({
@@ -1081,38 +1020,32 @@ export function CreatePost() {
                                 [post.id]: e.target.value,
                               }))
                             }
-                            onClick={(event) => {
-                              event.stopPropagation();
-                            }}
-                            aria-describedby={`comment-description-${post.id}`}
+                            onClick={(event) => event.stopPropagation()}
                             maxLength={500}
                           />
-                          <div id={`comment-description-${post.id}`} className="sr-only">
-                            Share your thoughts on this failure story. Maximum 500 characters.
+                          <div className="flex justify-end mt-2">
+                            <Button
+                              size="sm"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handlePostComment(post.id)
+                              }}
+                              disabled={!commentInputs[post.id]?.trim()}
+                              className="h-8 px-4 text-xs font-medium"
+                            >
+                              Send
+                            </Button>
                           </div>
-                          <Button
-                            size="sm"
-                            className="ml-2 lg:px-6 lg:py-3 lg:text-base focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handlePostComment(post.id)
-                            }}
-                            disabled={!commentInputs[post.id]?.trim()}
-                            aria-label="Post comment"
-                            type="submit"
-                          >
-                            Post Comment
-                          </Button>
                         </div>
                       </div>
                       {post.comments && post.comments.length > 0 && (
-                        <div className="mt-4">
+                        <div className="mt-3 space-y-3">
                           {post.comments.map((comment: any, index: any) => (
                             <div
                               key={index}
-                              className="flex items-center gap-2 mt-2 p-2 rounded-md bg-background"
+                              className="flex items-start gap-3"
                             >
-                              <Avatar className="w-8 h-8 ring-1 ring-border">
+                              <Avatar className="w-8 h-8 shrink-0 ring-1 ring-border">
                                 <Image
                                   src={
                                     users[comment.userId]?.profilepic ||
@@ -1124,32 +1057,32 @@ export function CreatePost() {
                                   className="rounded-full"
                                 />
                               </Avatar>
-                              <div>
-                                <p className="font-bold text-sm">
+                              <div className="flex-1 min-w-0 bg-muted/30 rounded-xl px-3 py-2">
+                                <p className="font-semibold text-xs text-foreground">
                                   {users[comment.userId]?.username || "Anonymous"}
                                 </p>
-                                <p>{comment.text}</p>
-                                <p className="text-gray-500 text-xs">
-                                  {new Date(comment.timestamp).toLocaleString()}
+                                <p className="text-sm text-foreground/90">{comment.text}</p>
+                                <p className="text-[11px] text-muted-foreground mt-1">
+                                  {timeAgo(comment.timestamp)}
                                 </p>
                               </div>
                             </div>
                           ))}
                         </div>
                       )}
-                    </>
+                    </div>
                   )}
 
                   {/* Show comments even if user is not logged in */}
                   {post.comments && post.comments.length > 0 && !auth.currentUser && (
-                    <div className="mt-4">
-                      <p className="text-sm text-muted-foreground mb-2">Comments:</p>
+                    <div className="px-5 pb-4 space-y-3">
+                      <p className="text-xs font-medium text-muted-foreground">Comments</p>
                       {post.comments.map((comment: any, index: any) => (
                         <div
                           key={index}
-                          className="flex items-center gap-2 mt-2 p-2 rounded-md bg-background"
+                          className="flex items-start gap-3"
                         >
-                          <Avatar className="w-8 h-8 ring-1 ring-border">
+                          <Avatar className="w-8 h-8 shrink-0 ring-1 ring-border">
                             <Image
                               src={
                                 users[comment.userId]?.profilepic ||
@@ -1161,20 +1094,20 @@ export function CreatePost() {
                               className="rounded-full"
                             />
                           </Avatar>
-                          <div>
-                            <p className="font-bold text-sm">
+                          <div className="flex-1 min-w-0 bg-muted/30 rounded-xl px-3 py-2">
+                            <p className="font-semibold text-xs text-foreground">
                               {users[comment.userId]?.username || "Anonymous"}
                             </p>
-                            <p>{comment.text}</p>
-                            <p className="text-gray-500 text-xs">
-                              {new Date(comment.timestamp).toLocaleString()}
+                            <p className="text-sm text-foreground/90">{comment.text}</p>
+                            <p className="text-[11px] text-muted-foreground mt-1">
+                              {timeAgo(comment.timestamp)}
                             </p>
                           </div>
                         </div>
                       ))}
                     </div>
                   )}
-                </Card>
+                </div>
               );
             })
           ) : (
@@ -1197,17 +1130,16 @@ export function CreatePost() {
                   </Button>
                 </div>
               ) : loading ? (
-                <div className="space-y-4">
-                  <HashLoader color="white" />
-                  <p className="text-muted-foreground">Loading posts...</p>
+                <div className="flex flex-col items-center justify-center py-16">
+                  <HashLoader size={35} color="#888" />
+                  <p className="text-muted-foreground text-sm mt-4">Loading posts...</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="text-muted-foreground text-lg">
-                    📝 No Posts Yet
-                  </div>
-                  <p className="text-muted-foreground max-w-md">
-                    Be the first to share your story! Create a post to get the conversation started.
+                <div className="bg-card border border-border rounded-xl p-10 text-center">
+                  <div className="text-4xl mb-3">📝</div>
+                  <h3 className="text-lg font-semibold text-foreground mb-1">no posts yet</h3>
+                  <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+                    be the first to share your story
                   </p>
                 </div>
               )}
@@ -1216,25 +1148,20 @@ export function CreatePost() {
         </div>
       )}
 
-      {/* Show login prompt for posts if not authenticated */}
       {authInitialized && !auth.currentUser && (
-        <Card className="p-8 text-center mt-6">
-          <div className="space-y-4">
-            <div className="text-muted-foreground text-lg">
-              🔒 Posts are Private
-            </div>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Please login to view and interact with posts from the community.
-            </p>
-            <Button
-              variant="default"
-              onClick={() => router.push("/login")}
-              className="mt-4"
-            >
-              Login to View Posts
-            </Button>
-          </div>
-        </Card>
+        <div className="bg-card border border-border rounded-xl p-8 text-center mt-6">
+          <div className="text-3xl mb-3">🔒</div>
+          <h3 className="text-lg font-semibold text-foreground mb-1">Posts are Private</h3>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-4">
+            Please login to view and interact with posts from the community.
+          </p>
+          <button
+            onClick={() => router.push("/login")}
+            className="px-5 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition"
+          >
+            Login to View Posts
+          </button>
+        </div>
       )}
     </div>
   );

@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuth } from "firebase-admin/auth";
+import admin from "@/lib/firebaseAdmin";
 import { incrementShare } from "@/services/posts";
 
-function response(data: any = null, error: string | null = null, status = 200) {
-    return NextResponse.json({ success: !error, data, error }, { status });
-}
-const auth = getAuth();
+const auth = admin.auth();
 
 export async function POST(
     req: NextRequest,
@@ -14,18 +11,18 @@ export async function POST(
     try {
         const authHeader = req.headers.get("Authorization");
         if (!authHeader?.startsWith("Bearer "))
-            return response(null, "Unauthorized", 401);
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         const idToken = authHeader.split("Bearer ")[1];
-        await auth.verifyIdToken(idToken); // just validate user, no need to store UID
+        await auth.verifyIdToken(idToken);
 
         const result = await incrementShare(params.id);
-        if (result.error) return response(null, result.error, result.status);
+        if (result.error) return NextResponse.json({ error: result.error }, { status: result.status || 400 });
 
-        return response(result);
+        return NextResponse.json(result);
     } catch (err) {
         console.error("Error incrementing shares:", err);
-        return response(null, "Unauthorized", 401);
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 }
 

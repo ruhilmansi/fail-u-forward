@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = process.env.GEMINI_API_KEY as string;
+const API_KEY = process.env.GOOGLE_API_KEY as string;
 
 // Handles Gemini-based validation
 export async function validateText(text: string): Promise<string> {

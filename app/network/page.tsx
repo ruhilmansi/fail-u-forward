@@ -55,8 +55,8 @@ export default function NetworkPage() {
   useEffect(() => {
     const filtered = users.filter(
       (user) =>
-        user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
+        (user.username || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (user.email || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredUsers(filtered);
   }, [searchQuery, users]);

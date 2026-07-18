@@ -1,7 +1,6 @@
-// services/users.ts
-import { getFirestore } from "firebase-admin/firestore";
+import admin from "@/lib/firebaseAdmin";
 
-const db = getFirestore();
+const db = admin.firestore();
 
 export async function getUserById(userId: string) {
     const userRef = db.collection("users").doc(userId);

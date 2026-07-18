@@ -4,15 +4,12 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowRight, ThumbsDown, Users, Coffee } from "lucide-react";
 import { useEffect } from "react";
-import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 import * as THREE from "three";
 import NET from "vanta/dist/vanta.net.min";
 import Link from "next/link";
-import { useTranslation } from "react-i18next";
 import Head from "next/head";
 
 export default function Home() {
-  const { t } = useTranslation();
 
   useEffect(() => {
     const vantaEffect = NET({
@@ -41,12 +38,12 @@ export default function Home() {
       className="min-h-screen w-full flex flex-col items-center justify-center relative"
     >
       <Head>
-        <title>Fail U Forward — Share setbacks, learn, and connect</title>
+        <title>Fail U Forward : share setbacks, learn, and connect</title>
         <meta
           name="description"
           content="Fail U Forward helps you share failures, learn from them, and connect with a supportive community."
         />
-        <meta property="og:title" content="Fail U Forward — Share setbacks, learn, and connect" />
+        <meta property="og:title" content="Fail U Forward : share setbacks, learn, and connect" />
         <meta property="og:description" content="Share failures, learn from setbacks, and connect with others." />
         <meta property="og:image" content="https://fail-u-forward.vercel.app/og-image.png" />
         <meta property="og:url" content="https://failuforward.vercel.app/" />
@@ -59,8 +56,8 @@ export default function Home() {
         {/* Hero content */}
         <div className="flex-grow mt-16 sm:mt-20">
           <div className="text-center space-y-6 px-2">
-            <h1 className="text-3xl md:text-6xl font-bold tracking-tight">
-              <TextGenerateEffect words={t("welcome")} />
+            <h1 className="text-3xl md:text-6xl font-bold tracking-tight text-white">
+              Welcome To FailUForward
             </h1>
           </div>
 
@@ -72,7 +69,7 @@ export default function Home() {
           >
             <br />
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              {t("tagline")}
+              fail. learn. connect.
             </p>
           </motion.div>
 
@@ -90,7 +87,7 @@ export default function Home() {
                   size="lg"
                   className="bg-black text-white border-black font-bold hover:bg-gray-800 hover:border-gray-800 text-xs sm:text-s"
                 >
-                  {t("explore")}
+                  explore
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </Link>
@@ -108,7 +105,7 @@ export default function Home() {
                   size="lg"
                   className="bg-white text-black border-gray-300 font-bold hover:bg-gray-50 hover:border-gray-400 text-xs sm:text-s"
                 >
-                  {t("about")}
+                  about
                 </Button>
               </Link>
             </motion.div>
@@ -125,18 +122,18 @@ export default function Home() {
           {[
             {
               icon: <ThumbsDown className="h-12 w-12 text-black" />,
-              title: t("card1_title"),
-              desc: t("card1_desc"),
+              title: "professional setbacks",
+              desc: "share your rejected applications and celebrate career mishaps",
             },
             {
               icon: <Users className="h-12 w-12 text-black" />,
-              title: t("card2_title"),
-              desc: t("card2_desc"),
+              title: "network",
+              desc: "connect with others",
             },
             {
               icon: <Coffee className="h-12 w-12 text-black" />,
-              title: t("card3_title"),
-              desc: t("card3_desc"),
+              title: "daily disappointments",
+              desc: "share your daily struggles and workplace disasters",
             },
           ].map((card, idx) => (
             <div
